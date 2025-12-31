@@ -53,6 +53,24 @@ To add new MCP primitives:
 ### Multi-client Support
 The server supports concurrent clients. Per-session state is demonstrated via resource subscriptions (`resources/subscriptions.ts`) and simulated logging (`server/logging.ts`).
 
+### OAuth Authentication
+The HTTP transports (SSE and Streamable HTTP) support OAuth 2.1 authentication with Microsoft Entra ID.
+
+**Module Structure** (`auth/`):
+- `config.ts` - Environment configuration loader
+- `metadata.ts` - RFC 9728 Protected Resource Metadata endpoints
+- `jwt-middleware.ts` - JWT validation using JWKS
+- `scope-middleware.ts` - Scope/role validation
+- `security-headers.ts` - Security response headers
+- `error-handlers.ts` - OAuth error handling
+- `rate-limiter.ts` - Rate limiting middleware
+- `index.ts` - Aggregated exports
+
+**Configuration**: Copy `.env.example` to `.env` and configure:
+- `ENTRA_CLIENT_ID` - Your Entra ID Application ID
+- `ENTRA_TENANT_ID` - Your tenant ID (or use AUTHORIZED_TENANTS=common)
+- `OAUTH_ENABLED` - Set to 'false' to disable OAuth for development
+
 ## Code Style
 
 - ES modules with `.js` extension in import paths

@@ -4,20 +4,50 @@ import express, { Request, Response } from "express";
 import { createServer } from "../server/index.js";
 import { randomUUID } from "node:crypto";
 import cors from "cors";
+import {
+  oauthConfig,
+  createMetadataRouter,
+  bearerAuth,
+  requireScope,
+  securityHeaders,
+  handleAuthError,
+  handleGeneralError,
+  metadataLimiter,
+  apiLimiter,
+  MCP_TOOL_SCOPES,
+  type AuthenticatedRequest,
+} from "../auth/index.js";
 
 console.log("Starting Streamable HTTP server...");
 
 // Express app with permissive CORS for testing with Inspector direct connect mode
 const app = express();
+
+// Security headers for all responses
+app.use(securityHeaders);
+
 app.use(
   cors({
-    origin: "*", // use "*" with caution in production
+    origin: oauthConfig.allowedOrigins.includes("*")
+      ? "*"
+      : oauthConfig.allowedOrigins,
     methods: "GET,POST,DELETE",
     preflightContinue: false,
     optionsSuccessStatus: 204,
-    exposedHeaders: ["mcp-session-id", "last-event-id", "mcp-protocol-version"],
+    exposedHeaders: [
+      "mcp-session-id",
+      "last-event-id",
+      "mcp-protocol-version",
+      "WWW-Authenticate",
+    ],
   })
 );
+
+// Rate limiting for metadata endpoints
+app.use("/.well-known", metadataLimiter);
+
+// OAuth metadata endpoints (RFC 9728)
+app.use(createMetadataRouter());
 
 // Map sessionId to server transport for each client
 const transports: Map<string, StreamableHTTPServerTransport> = new Map<
@@ -25,8 +55,16 @@ const transports: Map<string, StreamableHTTPServerTransport> = new Map<
   StreamableHTTPServerTransport
 >();
 
+/**
+ * Middleware stack for protected MCP endpoints.
+ * When OAuth is disabled, endpoints are unprotected (for development).
+ */
+const protectedMiddleware = oauthConfig.oauthEnabled
+  ? [apiLimiter, bearerAuth, requireScope(MCP_TOOL_SCOPES)]
+  : [apiLimiter];
+
 // Handle POST requests for client messages
-app.post("/mcp", async (req: Request, res: Response) => {
+app.post("/mcp", ...protectedMiddleware, async (req: Request, res: Response) => {
   console.log("Received MCP POST request");
   try {
     // Check for existing session ID
@@ -50,6 +88,20 @@ app.post("/mcp", async (req: Request, res: Response) => {
           // This avoids race conditions where requests might come in before the session is stored
           console.log(`Session initialized with ID: ${sessionId}`);
           transports.set(sessionId, transport);
+
+          // Log auth event if OAuth is enabled
+          if (oauthConfig.oauthEnabled) {
+            const authReq = req as AuthenticatedRequest;
+            console.log(
+              JSON.stringify({
+                event: "session_initialized",
+                sessionId,
+                tenantId: authReq.auth?.tid,
+                userId: authReq.auth?.sub,
+                timestamp: new Date().toISOString(),
+              })
+            );
+          }
         },
       });
 
@@ -103,7 +155,7 @@ app.post("/mcp", async (req: Request, res: Response) => {
 });
 
 // Handle GET requests for SSE streams
-app.get("/mcp", async (req: Request, res: Response) => {
+app.get("/mcp", ...protectedMiddleware, async (req: Request, res: Response) => {
   console.log("Received MCP GET request");
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   if (!sessionId || !transports.has(sessionId)) {
@@ -131,7 +183,7 @@ app.get("/mcp", async (req: Request, res: Response) => {
 });
 
 // Handle DELETE requests for session termination
-app.delete("/mcp", async (req: Request, res: Response) => {
+app.delete("/mcp", ...protectedMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   if (!sessionId || !transports.has(sessionId)) {
     res.status(400).json({
@@ -166,10 +218,20 @@ app.delete("/mcp", async (req: Request, res: Response) => {
   }
 });
 
+// Error handlers
+app.use(handleAuthError);
+app.use(handleGeneralError);
+
 // Start the server
-const PORT = process.env.PORT || 3001;
+const PORT = oauthConfig.port;
 const server = app.listen(PORT, () => {
   console.error(`MCP Streamable HTTP Server listening on port ${PORT}`);
+  console.error(`OAuth enabled: ${oauthConfig.oauthEnabled}`);
+  if (oauthConfig.oauthEnabled) {
+    console.error(
+      `Protected Resource Metadata: ${oauthConfig.mcpServerUrl}/.well-known/oauth-protected-resource`
+    );
+  }
 });
 
 // Handle server errors
