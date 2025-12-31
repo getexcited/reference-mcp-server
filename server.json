@@ -1,0 +1,68 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.getexcited/reference-mcp-server",
+  "title": "MCP Everything Server",
+  "description": "MCP server that exercises all features of the MCP protocol, including tools, resources, prompts, sampling, and OAuth authentication",
+  "version": "2.0.0",
+  "repository": {
+    "url": "https://github.com/getexcited/reference-mcp-server",
+    "source": "github"
+  },
+  "websiteUrl": "https://modelcontextprotocol.io",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@modelcontextprotocol/server-everything",
+      "version": "2.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "node"
+    },
+    {
+      "registryType": "oci",
+      "registryBaseUrl": "https://ghcr.io",
+      "identifier": "getexcited/reference-mcp-server",
+      "version": "2.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "valueHint": "transport",
+          "description": "Transport type: stdio, sse, or streamableHttp",
+          "isRequired": false,
+          "default": "stdio",
+          "choices": ["stdio", "sse", "streamableHttp"]
+        }
+      ]
+    }
+  ],
+  "environmentVariables": [
+    {
+      "name": "OAUTH_ENABLED",
+      "description": "Enable OAuth 2.1 authentication for HTTP transports",
+      "isRequired": false,
+      "default": "false"
+    },
+    {
+      "name": "ENTRA_CLIENT_ID",
+      "description": "Microsoft Entra ID Application (client) ID",
+      "isRequired": false,
+      "isSecret": false
+    },
+    {
+      "name": "ENTRA_TENANT_ID",
+      "description": "Microsoft Entra ID Tenant ID",
+      "isRequired": false,
+      "isSecret": false
+    },
+    {
+      "name": "PORT",
+      "description": "HTTP server port for SSE/Streamable HTTP transports",
+      "isRequired": false,
+      "default": "3001"
+    }
+  ]
+}
