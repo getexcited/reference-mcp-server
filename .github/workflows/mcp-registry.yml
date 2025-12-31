@@ -1,0 +1,62 @@
+name: Publish to MCP Registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      registry_url:
+        description: 'MCP Registry URL'
+        required: true
+        type: string
+        default: 'https://registry.modelcontextprotocol.io'
+      dry_run:
+        description: 'Dry run (validate without publishing)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for GitHub OIDC authentication
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install mcp-publisher
+        run: |
+          git clone --depth 1 https://github.com/modelcontextprotocol/registry.git /tmp/mcp-registry
+          cd /tmp/mcp-registry
+          make publisher
+          sudo mv bin/mcp-publisher /usr/local/bin/
+
+      - name: Validate server.json
+        run: mcp-publisher validate
+
+      - name: Authenticate with GitHub OIDC
+        if: ${{ !inputs.dry_run }}
+        run: mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        if: ${{ !inputs.dry_run }}
+        run: mcp-publisher publish
+        env:
+          MCP_REGISTRY_URL: ${{ inputs.registry_url }}
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "## Dry Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ server.json validated successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry URL:** ${{ inputs.registry_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To publish, run this workflow with dry_run=false." >> $GITHUB_STEP_SUMMARY
