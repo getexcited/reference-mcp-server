@@ -5,6 +5,7 @@ import { registerGetEnvTool } from "./get-env.js";
 import { registerGetResourceLinksTool } from "./get-resource-links.js";
 import { registerGetResourceReferenceTool } from "./get-resource-reference.js";
 import { registerGetRootsListTool } from "./get-roots-list.js";
+import { registerGetServerIdentityTool } from "./get-server-identity.js";
 import { registerGetStructuredContentTool } from "./get-structured-content.js";
 import { registerGetSumTool } from "./get-sum.js";
 import { registerGetTinyImageTool } from "./get-tiny-image.js";
@@ -12,6 +13,7 @@ import { registerGZipFileAsResourceTool } from "./gzip-file-as-resource.js";
 import { registerToggleSimulatedLoggingTool } from "./toggle-simulated-logging.js";
 import { registerToggleSubscriberUpdatesTool } from "./toggle-subscriber-updates.js";
 import { registerTriggerElicitationRequestTool } from "./trigger-elicitation-request.js";
+import { registerTriggerEnhancedSamplingTool } from "./trigger-enhanced-sampling.js";
 import { registerTriggerLongRunningOperationTool } from "./trigger-long-running-operation.js";
 import { registerTriggerSamplingRequestTool } from "./trigger-sampling-request.js";
 
@@ -25,6 +27,7 @@ export const registerTools = (server: McpServer) => {
   registerGetEnvTool(server);
   registerGetResourceLinksTool(server);
   registerGetResourceReferenceTool(server);
+  registerGetServerIdentityTool(server);
   registerGetStructuredContentTool(server);
   registerGetSumTool(server);
   registerGetTinyImageTool(server);
@@ -41,5 +44,6 @@ export const registerTools = (server: McpServer) => {
 export const registerConditionalTools = (server: McpServer) => {
   registerGetRootsListTool(server);
   registerTriggerElicitationRequestTool(server);
+  registerTriggerEnhancedSamplingTool(server);
   registerTriggerSamplingRequestTool(server);
 };
