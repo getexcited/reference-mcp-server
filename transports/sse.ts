@@ -15,6 +15,7 @@ import {
   MCP_TOOL_SCOPES,
   type AuthenticatedRequest,
 } from "../auth/index.js";
+import { createDiscoveryRouter } from "../server/discovery.js";
 
 console.error("Starting SSE server...");
 
@@ -41,6 +42,9 @@ app.use("/.well-known", metadataLimiter);
 
 // OAuth metadata endpoints (RFC 9728)
 app.use(createMetadataRouter());
+
+// MCP discovery endpoints (server identity document)
+app.use(createDiscoveryRouter());
 
 // Map sessionId to transport for each client
 const transports: Map<string, SSEServerTransport> = new Map<
