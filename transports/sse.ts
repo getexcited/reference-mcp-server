@@ -2,19 +2,45 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express from "express";
 import { createServer } from "../server/index.js";
 import cors from "cors";
+import {
+  oauthConfig,
+  createMetadataRouter,
+  bearerAuth,
+  requireScope,
+  securityHeaders,
+  handleAuthError,
+  handleGeneralError,
+  metadataLimiter,
+  apiLimiter,
+  MCP_TOOL_SCOPES,
+  type AuthenticatedRequest,
+} from "../auth/index.js";
 
 console.error("Starting SSE server...");
 
 // Express app with permissive CORS for testing with Inspector direct connect mode
 const app = express();
+
+// Security headers for all responses
+app.use(securityHeaders);
+
 app.use(
   cors({
-    origin: "*", // use "*" with caution in production
+    origin: oauthConfig.allowedOrigins.includes("*")
+      ? "*"
+      : oauthConfig.allowedOrigins,
     methods: "GET,POST",
     preflightContinue: false,
     optionsSuccessStatus: 204,
+    exposedHeaders: ["WWW-Authenticate"],
   })
 );
+
+// Rate limiting for metadata endpoints
+app.use("/.well-known", metadataLimiter);
+
+// OAuth metadata endpoints (RFC 9728)
+app.use(createMetadataRouter());
 
 // Map sessionId to transport for each client
 const transports: Map<string, SSEServerTransport> = new Map<
@@ -22,8 +48,16 @@ const transports: Map<string, SSEServerTransport> = new Map<
   SSEServerTransport
 >();
 
+/**
+ * Middleware stack for protected MCP endpoints.
+ * When OAuth is disabled, endpoints are unprotected (for development).
+ */
+const protectedMiddleware = oauthConfig.oauthEnabled
+  ? [apiLimiter, bearerAuth, requireScope(MCP_TOOL_SCOPES)]
+  : [apiLimiter];
+
 // Handle GET requests for new SSE streams
-app.get("/sse", async (req, res) => {
+app.get("/sse", ...protectedMiddleware, async (req, res) => {
   let transport: SSEServerTransport;
   const { server, cleanup } = createServer();
 
@@ -45,6 +79,20 @@ app.get("/sse", async (req, res) => {
     const sessionId = transport.sessionId;
     console.error("Client Connected: ", sessionId);
 
+    // Log auth event if OAuth is enabled
+    if (oauthConfig.oauthEnabled) {
+      const authReq = req as AuthenticatedRequest;
+      console.log(
+        JSON.stringify({
+          event: "session_initialized",
+          sessionId,
+          tenantId: authReq.auth?.tid,
+          userId: authReq.auth?.sub,
+          timestamp: new Date().toISOString(),
+        })
+      );
+    }
+
     // Handle close of connection
     server.server.onclose = async () => {
       const sessionId = transport.sessionId;
@@ -56,7 +104,7 @@ app.get("/sse", async (req, res) => {
 });
 
 // Handle POST requests for client messages
-app.post("/message", async (req, res) => {
+app.post("/message", ...protectedMiddleware, async (req, res) => {
   // Session Id should exist for POST /message requests
   const sessionId = req?.query?.sessionId as string;
 
@@ -67,11 +115,25 @@ app.post("/message", async (req, res) => {
     await transport.handlePostMessage(req, res);
   } else {
     console.error(`No transport found for sessionId ${sessionId}`);
+    res.status(400).json({
+      error: "invalid_session",
+      error_description: "No valid session found for the provided session ID",
+    });
   }
 });
 
+// Error handlers
+app.use(handleAuthError);
+app.use(handleGeneralError);
+
 // Start the express server
-const PORT = process.env.PORT || 3001;
+const PORT = oauthConfig.port;
 app.listen(PORT, () => {
   console.error(`Server is running on port ${PORT}`);
+  console.error(`OAuth enabled: ${oauthConfig.oauthEnabled}`);
+  if (oauthConfig.oauthEnabled) {
+    console.error(
+      `Protected Resource Metadata: ${oauthConfig.mcpServerUrl}/.well-known/oauth-protected-resource`
+    );
+  }
 });
