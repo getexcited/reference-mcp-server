@@ -1,10 +1,13 @@
 name: Publish to MCP Registry
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
+      registry_url:
+        description: 'MCP Registry URL'
+        required: true
+        type: string
+        default: 'https://registry.modelcontextprotocol.io'
       dry_run:
         description: 'Dry run (validate without publishing)'
         required: false
@@ -45,7 +48,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: mcp-publisher publish
         env:
-          MCP_REGISTRY_URL: https://registry.modelcontextprotocol.io
+          MCP_REGISTRY_URL: ${{ inputs.registry_url }}
 
       - name: Dry run summary
         if: ${{ inputs.dry_run }}
@@ -54,4 +57,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ server.json validated successfully" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To publish, run this workflow with dry_run=false or trigger via release." >> $GITHUB_STEP_SUMMARY
+          echo "**Registry URL:** ${{ inputs.registry_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To publish, run this workflow with dry_run=false." >> $GITHUB_STEP_SUMMARY
