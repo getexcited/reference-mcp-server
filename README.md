@@ -1,4 +1,4 @@
-# Everything MCP Server
+# Reference MCP Server
 
 **[Architecture](docs/architecture.md)
 | [Project Structure](docs/structure.md)
@@ -7,7 +7,18 @@
 | [Extension Points](docs/extension.md)
 | [How It Works](docs/how-it-works.md)**
 
-This MCP server attempts to exercise all the features of the MCP protocol. It is not intended to be a useful server, but rather a test server for builders of MCP clients. It implements prompts, tools, resources, sampling, and more to showcase MCP capabilities.
+This is a comprehensive reference implementation of the Model Context Protocol (MCP) designed to exercise all protocol features for testing and development. While not intended for production use, it serves as a valuable testing ground for MCP client developers and a demonstration of protocol capabilities.
+
+**Key Features:**
+
+- **Complete MCP Protocol Coverage**: Tools, resources, prompts, sampling, and resource subscriptions
+- **Latest Spec Features**: Enhanced Sampling with tool calling and Server Discovery (November 2025 MCP spec)
+- **Multiple Transports**: stdio, HTTP+SSE (deprecated), and Streamable HTTP
+- **OAuth 2.1 Authentication**: Microsoft Entra ID integration with JWT validation for HTTP transports
+- **Multi-Client Support**: Demonstrates per-session state management and concurrent client handling
+- **Production-Ready Patterns**: Proper error handling, cleanup, structured logging, and security best practices
+
+This fork extends the official MCP Everything server with enterprise authentication, modern protocol features, and comprehensive documentation to help developers understand real-world MCP server implementation.
 
 ## Quick Start with Docker
 
