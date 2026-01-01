@@ -112,7 +112,10 @@ export const validateTenant: RequestHandler = (
 /**
  * Build WWW-Authenticate header value per RFC 9728.
  */
-function buildWwwAuthenticateHeader(error?: string, errorDescription?: string): string {
+function buildWwwAuthenticateHeader(
+  error?: string,
+  errorDescription?: string
+): string {
   const { mcpServerUrl } = oauthConfig;
   const resourceMetadataUrl = `${mcpServerUrl}/.well-known/oauth-protected-resource`;
 
@@ -135,13 +138,24 @@ function buildWwwAuthenticateHeader(error?: string, errorDescription?: string): 
 export function createBearerAuthMiddleware(): RequestHandler {
   const jwtCheck = createJwtCheck();
 
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): void => {
     jwtCheck(req, res, (err: unknown) => {
       if (err) {
-        const error = err as Error & { code?: string; name?: string; status?: number };
+        const error = err as Error & {
+          code?: string;
+          name?: string;
+          status?: number;
+        };
 
         // Handle missing authorization header
-        if (error.code === "credentials_required" || !req.headers.authorization) {
+        if (
+          error.code === "credentials_required" ||
+          !req.headers.authorization
+        ) {
           res.set("WWW-Authenticate", buildWwwAuthenticateHeader());
           res.status(401).json({
             error: "invalid_request",
@@ -151,8 +165,14 @@ export function createBearerAuthMiddleware(): RequestHandler {
         }
 
         // Handle expired tokens
-        if (error.code === "ERR_JWT_EXPIRED" || error.message?.includes("expired")) {
-          res.set("WWW-Authenticate", buildWwwAuthenticateHeader("invalid_token", "Token expired"));
+        if (
+          error.code === "ERR_JWT_EXPIRED" ||
+          error.message?.includes("expired")
+        ) {
+          res.set(
+            "WWW-Authenticate",
+            buildWwwAuthenticateHeader("invalid_token", "Token expired")
+          );
           res.status(401).json({
             error: "invalid_token",
             error_description: "The access token has expired",
@@ -166,10 +186,14 @@ export function createBearerAuthMiddleware(): RequestHandler {
           error.code === "ERR_JWT_INVALID" ||
           error.code === "ERR_JWS_INVALID"
         ) {
-          res.set("WWW-Authenticate", buildWwwAuthenticateHeader("invalid_token"));
+          res.set(
+            "WWW-Authenticate",
+            buildWwwAuthenticateHeader("invalid_token")
+          );
           res.status(401).json({
             error: "invalid_token",
-            error_description: "The access token is malformed or signature verification failed",
+            error_description:
+              "The access token is malformed or signature verification failed",
           });
           return;
         }
@@ -179,10 +203,14 @@ export function createBearerAuthMiddleware(): RequestHandler {
           name: error.name,
           code: error.code,
           message: error.message,
-          stack: oauthConfig.nodeEnv === "development" ? error.stack : undefined,
+          stack:
+            oauthConfig.nodeEnv === "development" ? error.stack : undefined,
         });
 
-        res.set("WWW-Authenticate", buildWwwAuthenticateHeader("invalid_token"));
+        res.set(
+          "WWW-Authenticate",
+          buildWwwAuthenticateHeader("invalid_token")
+        );
         res.status(401).json({
           error: "invalid_token",
           error_description: "Token validation failed",

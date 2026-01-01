@@ -8,7 +8,10 @@ import { AuthenticatedRequest } from "./jwt-middleware.js";
 export const metadataLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 60, // 60 requests per minute
-  message: { error: "too_many_requests", error_description: "Rate limit exceeded" },
+  message: {
+    error: "too_many_requests",
+    error_description: "Rate limit exceeded",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -24,7 +27,10 @@ export const apiLimiter = rateLimit({
     const authReq = req as AuthenticatedRequest;
     return authReq.auth?.sub || req.ip || "unknown";
   },
-  message: { error: "too_many_requests", error_description: "Rate limit exceeded" },
+  message: {
+    error: "too_many_requests",
+    error_description: "Rate limit exceeded",
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

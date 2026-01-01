@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       registry_url:
-        description: 'MCP Registry URL'
+        description: "MCP Registry URL"
         required: true
         type: string
-        default: 'https://registry.modelcontextprotocol.io'
+        default: "https://registry.modelcontextprotocol.io"
       dry_run:
-        description: 'Dry run (validate without publishing)'
+        description: "Dry run (validate without publishing)"
         required: false
         type: boolean
         default: true
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for GitHub OIDC authentication
+      id-token: write # Required for GitHub OIDC authentication
 
     steps:
       - name: Checkout repository
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
 
       - name: Install mcp-publisher
         run: |

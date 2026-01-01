@@ -7,7 +7,9 @@ This plan adds November 2025 MCP spec features to the reference server.
 ## Feature 1: Enhanced Sampling with Tool Calling
 
 ### Overview
+
 Extend the existing `trigger-sampling-request` tool to support:
+
 - Tool definitions in sampling requests
 - Tool choice modes (auto, required, none)
 - Server-side agent loop pattern with tool execution
@@ -16,24 +18,34 @@ Extend the existing `trigger-sampling-request` tool to support:
 ### Implementation Steps
 
 #### Step 1: Create Enhanced Sampling Tool Schema
+
 **File:** `tools/trigger-enhanced-sampling.ts` (new)
 
 Define expanded input schema:
+
 ```typescript
 const TriggerEnhancedSamplingSchema = z.object({
   prompt: z.string().describe("The prompt to send to the LLM"),
   maxTokens: z.number().default(1000).describe("Maximum tokens to generate"),
   systemPrompt: z.string().optional().describe("System prompt for the LLM"),
-  includeTools: z.boolean().default(false).describe("Include sample tools in request"),
-  toolChoice: z.enum(["auto", "required", "none"]).default("auto").describe("Tool choice mode"),
+  includeTools: z
+    .boolean()
+    .default(false)
+    .describe("Include sample tools in request"),
+  toolChoice: z
+    .enum(["auto", "required", "none"])
+    .default("auto")
+    .describe("Tool choice mode"),
   maxIterations: z.number().default(5).describe("Max agent loop iterations"),
 });
 ```
 
 #### Step 2: Define Sample Tools for Demonstration
+
 **File:** `tools/trigger-enhanced-sampling.ts`
 
 Create demonstrable tool definitions:
+
 ```typescript
 const sampleTools: Tool[] = [
   {
@@ -42,10 +54,10 @@ const sampleTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        city: { type: "string", description: "City name" }
+        city: { type: "string", description: "City name" },
       },
-      required: ["city"]
-    }
+      required: ["city"],
+    },
   },
   {
     name: "calculate",
@@ -53,10 +65,13 @@ const sampleTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        expression: { type: "string", description: "Math expression to evaluate" }
+        expression: {
+          type: "string",
+          description: "Math expression to evaluate",
+        },
       },
-      required: ["expression"]
-    }
+      required: ["expression"],
+    },
   },
   {
     name: "get_time",
@@ -64,26 +79,33 @@ const sampleTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        timezone: { type: "string", description: "IANA timezone (e.g., America/New_York)" }
+        timezone: {
+          type: "string",
+          description: "IANA timezone (e.g., America/New_York)",
+        },
       },
-      required: ["timezone"]
-    }
-  }
+      required: ["timezone"],
+    },
+  },
 ];
 ```
 
 #### Step 3: Implement Mock Tool Executor
+
 **File:** `tools/trigger-enhanced-sampling.ts`
 
 ```typescript
-async function executeMockTool(name: string, input: Record<string, unknown>): Promise<string> {
+async function executeMockTool(
+  name: string,
+  input: Record<string, unknown>
+): Promise<string> {
   switch (name) {
     case "get_weather":
       return JSON.stringify({
         city: input.city,
         temperature: Math.floor(Math.random() * 30) + 5,
         conditions: ["sunny", "cloudy", "rainy"][Math.floor(Math.random() * 3)],
-        humidity: Math.floor(Math.random() * 60) + 40
+        humidity: Math.floor(Math.random() * 60) + 40,
       });
     case "calculate":
       try {
@@ -94,7 +116,9 @@ async function executeMockTool(name: string, input: Record<string, unknown>): Pr
         return `Error: Could not evaluate expression`;
       }
     case "get_time":
-      return new Date().toLocaleString("en-US", { timeZone: input.timezone as string });
+      return new Date().toLocaleString("en-US", {
+        timeZone: input.timezone as string,
+      });
     default:
       return `Unknown tool: ${name}`;
   }
@@ -102,6 +126,7 @@ async function executeMockTool(name: string, input: Record<string, unknown>): Pr
 ```
 
 #### Step 4: Implement Agent Loop Logic
+
 **File:** `tools/trigger-enhanced-sampling.ts`
 
 ```typescript
@@ -114,16 +139,17 @@ async function runAgentLoop(
   maxTokens: number,
   maxIterations: number
 ): Promise<{ messages: SamplingMessage[]; finalResponse: string }> {
-  const messages: SamplingMessage[] = [{
-    role: "user",
-    content: { type: "text", text: initialPrompt }
-  }];
+  const messages: SamplingMessage[] = [
+    {
+      role: "user",
+      content: { type: "text", text: initialPrompt },
+    },
+  ];
 
   for (let i = 0; i < maxIterations; i++) {
     // Force completion on final iteration
-    const currentToolChoice = i === maxIterations - 1
-      ? { mode: "none" as const }
-      : toolChoice;
+    const currentToolChoice =
+      i === maxIterations - 1 ? { mode: "none" as const } : toolChoice;
 
     const request: CreateMessageRequest = {
       method: "sampling/createMessage",
@@ -133,15 +159,17 @@ async function runAgentLoop(
         maxTokens,
         tools,
         toolChoice: currentToolChoice,
-      }
+      },
     };
 
     const result = await extra.sendRequest(request, CreateMessageResultSchema);
 
     if (result.stopReason === "toolUse") {
       // Handle tool calls
-      const content = Array.isArray(result.content) ? result.content : [result.content];
-      const toolCalls = content.filter(c => c.type === "tool_use");
+      const content = Array.isArray(result.content)
+        ? result.content
+        : [result.content];
+      const toolCalls = content.filter((c) => c.type === "tool_use");
 
       messages.push({ role: "assistant", content: result.content });
 
@@ -150,7 +178,12 @@ async function runAgentLoop(
         toolCalls.map(async (tc) => ({
           type: "tool_result" as const,
           toolUseId: tc.id,
-          content: [{ type: "text" as const, text: await executeMockTool(tc.name, tc.input) }]
+          content: [
+            {
+              type: "text" as const,
+              text: await executeMockTool(tc.name, tc.input),
+            },
+          ],
         }))
       );
 
@@ -159,7 +192,10 @@ async function runAgentLoop(
     }
 
     // Final response
-    const text = result.content.type === "text" ? result.content.text : JSON.stringify(result.content);
+    const text =
+      result.content.type === "text"
+        ? result.content.text
+        : JSON.stringify(result.content);
     return { messages, finalResponse: text };
   }
 
@@ -168,12 +204,14 @@ async function runAgentLoop(
 ```
 
 #### Step 5: Register Enhanced Sampling Tool
+
 **File:** `tools/trigger-enhanced-sampling.ts`
 
 ```typescript
 export const registerTriggerEnhancedSamplingTool = (server: McpServer) => {
   const clientCapabilities = server.server.getClientCapabilities() || {};
-  const clientSupportsToolsInSampling = clientCapabilities.sampling?.tools !== undefined;
+  const clientSupportsToolsInSampling =
+    clientCapabilities.sampling?.tools !== undefined;
   const clientSupportsSampling = clientCapabilities.sampling !== undefined;
 
   if (clientSupportsSampling) {
@@ -187,16 +225,24 @@ export const registerTriggerEnhancedSamplingTool = (server: McpServer) => {
         inputSchema: TriggerEnhancedSamplingSchema,
       },
       async (args, extra): Promise<CallToolResult> => {
-        const { prompt, maxTokens, systemPrompt, includeTools, toolChoice, maxIterations } =
-          TriggerEnhancedSamplingSchema.parse(args);
+        const {
+          prompt,
+          maxTokens,
+          systemPrompt,
+          includeTools,
+          toolChoice,
+          maxIterations,
+        } = TriggerEnhancedSamplingSchema.parse(args);
 
         if (includeTools && !clientSupportsToolsInSampling) {
           return {
             isError: true,
-            content: [{
-              type: "text",
-              text: "Client does not support tools in sampling requests. Set includeTools=false."
-            }]
+            content: [
+              {
+                type: "text",
+                text: "Client does not support tools in sampling requests. Set includeTools=false.",
+              },
+            ],
           };
         }
 
@@ -212,28 +258,45 @@ export const registerTriggerEnhancedSamplingTool = (server: McpServer) => {
           );
 
           return {
-            content: [{
-              type: "text",
-              text: `Agent Loop Result:\n\nIterations: ${result.messages.length}\n\nFinal Response:\n${result.finalResponse}\n\nFull Conversation:\n${JSON.stringify(result.messages, null, 2)}`
-            }]
+            content: [
+              {
+                type: "text",
+                text: `Agent Loop Result:\n\nIterations: ${
+                  result.messages.length
+                }\n\nFinal Response:\n${
+                  result.finalResponse
+                }\n\nFull Conversation:\n${JSON.stringify(
+                  result.messages,
+                  null,
+                  2
+                )}`,
+              },
+            ],
           };
         } else {
           // Basic sampling without tools (existing behavior)
           const request: CreateMessageRequest = {
             method: "sampling/createMessage",
             params: {
-              messages: [{ role: "user", content: { type: "text", text: prompt } }],
+              messages: [
+                { role: "user", content: { type: "text", text: prompt } },
+              ],
               systemPrompt: systemPrompt || "You are a helpful assistant.",
               maxTokens,
-            }
+            },
           };
 
-          const result = await extra.sendRequest(request, CreateMessageResultSchema);
+          const result = await extra.sendRequest(
+            request,
+            CreateMessageResultSchema
+          );
           return {
-            content: [{
-              type: "text",
-              text: `Sampling Result:\n${JSON.stringify(result, null, 2)}`
-            }]
+            content: [
+              {
+                type: "text",
+                text: `Sampling Result:\n${JSON.stringify(result, null, 2)}`,
+              },
+            ],
           };
         }
       }
@@ -243,9 +306,11 @@ export const registerTriggerEnhancedSamplingTool = (server: McpServer) => {
 ```
 
 #### Step 6: Update Tools Index
+
 **File:** `tools/index.ts`
 
 Add import and registration:
+
 ```typescript
 import { registerTriggerEnhancedSamplingTool } from "./trigger-enhanced-sampling.js";
 
@@ -253,7 +318,7 @@ export const registerConditionalTools = (server: McpServer) => {
   registerGetRootsListTool(server);
   registerTriggerElicitationRequestTool(server);
   registerTriggerSamplingRequestTool(server);
-  registerTriggerEnhancedSamplingTool(server);  // Add this
+  registerTriggerEnhancedSamplingTool(server); // Add this
 };
 ```
 
@@ -262,13 +327,16 @@ export const registerConditionalTools = (server: McpServer) => {
 ## Feature 2: Server Discovery
 
 ### Overview
+
 Add `.well-known` endpoints for server discovery:
+
 - `/.well-known/mcp.json` - Server identity document
 - `/.well-known/oauth-protected-resource` - OAuth metadata (for authenticated servers)
 
 ### Implementation Steps
 
 #### Step 1: Create Server Metadata Module
+
 **File:** `server/metadata.ts` (new)
 
 ```typescript
@@ -308,13 +376,16 @@ export interface ProtectedResourceMetadata {
   resource_documentation?: string;
 }
 
-export function getServerIdentityDocument(baseUrl?: string): ServerIdentityDocument {
+export function getServerIdentityDocument(
+  baseUrl?: string
+): ServerIdentityDocument {
   return {
     mcp_version: "2025-11-25",
     server_name: "mcp-servers/everything",
     server_version: "2.0.0",
     server_title: "Everything Reference Server",
-    description: "MCP reference server that exercises all protocol features for testing MCP clients",
+    description:
+      "MCP reference server that exercises all protocol features for testing MCP clients",
     endpoints: {
       stdio: true,
       ...(baseUrl && {
@@ -337,7 +408,9 @@ export function getServerIdentityDocument(baseUrl?: string): ServerIdentityDocum
   };
 }
 
-export function getProtectedResourceMetadata(baseUrl: string): ProtectedResourceMetadata {
+export function getProtectedResourceMetadata(
+  baseUrl: string
+): ProtectedResourceMetadata {
   return {
     resource: baseUrl,
     resource_name: "Everything Reference Server",
@@ -352,11 +425,15 @@ export function getProtectedResourceMetadata(baseUrl: string): ProtectedResource
 ```
 
 #### Step 2: Create Discovery Routes Module
+
 **File:** `server/discovery.ts` (new)
 
 ```typescript
 import { Router, Request, Response } from "express";
-import { getServerIdentityDocument, getProtectedResourceMetadata } from "./metadata.js";
+import {
+  getServerIdentityDocument,
+  getProtectedResourceMetadata,
+} from "./metadata.js";
 
 export function createDiscoveryRouter(baseUrl?: string): Router {
   const router = Router();
@@ -373,15 +450,19 @@ export function createDiscoveryRouter(baseUrl?: string): Router {
   });
 
   // OAuth protected resource metadata (RFC 9728)
-  router.get("/.well-known/oauth-protected-resource", (req: Request, res: Response) => {
-    const effectiveBaseUrl = baseUrl || `${req.protocol}://${req.get("host")}`;
+  router.get(
+    "/.well-known/oauth-protected-resource",
+    (req: Request, res: Response) => {
+      const effectiveBaseUrl =
+        baseUrl || `${req.protocol}://${req.get("host")}`;
 
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Cache-Control", "max-age=3600");
-    res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "max-age=3600");
+      res.setHeader("X-Content-Type-Options", "nosniff");
 
-    res.json(getProtectedResourceMetadata(effectiveBaseUrl));
-  });
+      res.json(getProtectedResourceMetadata(effectiveBaseUrl));
+    }
+  );
 
   // Alternative path for mcp discovery
   router.get("/.well-known/mcp", (req: Request, res: Response) => {
@@ -398,9 +479,11 @@ export function createDiscoveryRouter(baseUrl?: string): Router {
 ```
 
 #### Step 3: Update Streamable HTTP Transport
+
 **File:** `transports/streamableHttp.ts`
 
 Add discovery routes to Express app:
+
 ```typescript
 import { createDiscoveryRouter } from "../server/discovery.js";
 
@@ -410,9 +493,11 @@ app.use(createDiscoveryRouter(baseUrl));
 ```
 
 #### Step 4: Update SSE Transport
+
 **File:** `transports/sse.ts`
 
 Add same discovery routes:
+
 ```typescript
 import { createDiscoveryRouter } from "../server/discovery.js";
 
@@ -421,9 +506,11 @@ app.use(createDiscoveryRouter());
 ```
 
 #### Step 5: Create Discovery Test Tool
+
 **File:** `tools/get-server-identity.ts` (new)
 
 Tool that returns the server's own identity document:
+
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
@@ -431,7 +518,10 @@ import { z } from "zod";
 import { getServerIdentityDocument } from "../server/metadata.js";
 
 const GetServerIdentitySchema = z.object({
-  baseUrl: z.string().optional().describe("Base URL for endpoint URLs (optional)"),
+  baseUrl: z
+    .string()
+    .optional()
+    .describe("Base URL for endpoint URLs (optional)"),
 });
 
 export const registerGetServerIdentityTool = (server: McpServer) => {
@@ -447,10 +537,12 @@ export const registerGetServerIdentityTool = (server: McpServer) => {
       const identity = getServerIdentityDocument(baseUrl);
 
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify(identity, null, 2),
-        }],
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(identity, null, 2),
+          },
+        ],
         structuredContent: identity,
       };
     }
@@ -459,6 +551,7 @@ export const registerGetServerIdentityTool = (server: McpServer) => {
 ```
 
 #### Step 6: Update Tools Index for Discovery Tool
+
 **File:** `tools/index.ts`
 
 ```typescript
@@ -466,7 +559,7 @@ import { registerGetServerIdentityTool } from "./get-server-identity.js";
 
 export const registerTools = (server: McpServer) => {
   // ... existing tools ...
-  registerGetServerIdentityTool(server);  // Add this
+  registerGetServerIdentityTool(server); // Add this
 };
 ```
 
@@ -475,25 +568,28 @@ export const registerTools = (server: McpServer) => {
 ## File Summary
 
 ### New Files
-| File | Purpose |
-|------|---------|
-| `tools/trigger-enhanced-sampling.ts` | Enhanced sampling with tool calling |
-| `tools/get-server-identity.ts` | Tool to expose server identity |
-| `server/metadata.ts` | Server identity/metadata definitions |
-| `server/discovery.ts` | Express router for `.well-known` endpoints |
+
+| File                                 | Purpose                                    |
+| ------------------------------------ | ------------------------------------------ |
+| `tools/trigger-enhanced-sampling.ts` | Enhanced sampling with tool calling        |
+| `tools/get-server-identity.ts`       | Tool to expose server identity             |
+| `server/metadata.ts`                 | Server identity/metadata definitions       |
+| `server/discovery.ts`                | Express router for `.well-known` endpoints |
 
 ### Modified Files
-| File | Changes |
-|------|---------|
-| `tools/index.ts` | Import and register new tools |
-| `transports/streamableHttp.ts` | Add discovery router |
-| `transports/sse.ts` | Add discovery router |
+
+| File                           | Changes                       |
+| ------------------------------ | ----------------------------- |
+| `tools/index.ts`               | Import and register new tools |
+| `transports/streamableHttp.ts` | Add discovery router          |
+| `transports/sse.ts`            | Add discovery router          |
 
 ---
 
 ## Testing Checklist
 
 ### Enhanced Sampling
+
 - [ ] Basic sampling still works without tools
 - [ ] Tool definitions included in sampling request
 - [ ] Tool choice modes work (auto, required, none)
@@ -503,6 +599,7 @@ export const registerTools = (server: McpServer) => {
 - [ ] Max iterations limit respected
 
 ### Server Discovery
+
 - [ ] `GET /.well-known/mcp.json` returns valid identity document
 - [ ] `GET /.well-known/mcp` returns same document
 - [ ] `GET /.well-known/oauth-protected-resource` returns metadata
@@ -516,6 +613,7 @@ export const registerTools = (server: McpServer) => {
 ## Dependencies
 
 No new dependencies required. Uses existing:
+
 - `@modelcontextprotocol/sdk` (existing)
 - `express` (existing)
 - `zod` (existing)
@@ -524,13 +622,13 @@ No new dependencies required. Uses existing:
 
 ## Estimated Effort
 
-| Task | Complexity |
-|------|------------|
-| Enhanced Sampling Tool | Medium |
-| Agent Loop Logic | Medium |
-| Server Metadata Module | Low |
-| Discovery Routes | Low |
-| Transport Updates | Low |
-| Testing | Medium |
+| Task                   | Complexity |
+| ---------------------- | ---------- |
+| Enhanced Sampling Tool | Medium     |
+| Agent Loop Logic       | Medium     |
+| Server Metadata Module | Low        |
+| Discovery Routes       | Low        |
+| Transport Updates      | Low        |
+| Testing                | Medium     |
 
 **Total:** ~4-6 hours of implementation

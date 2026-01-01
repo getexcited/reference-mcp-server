@@ -11,12 +11,14 @@ Please note that mcp-server-git is currently in early development. The functiona
 ### Tools
 
 1. `git_status`
+
    - Shows the working tree status
    - Input:
      - `repo_path` (string): Path to Git repository
    - Returns: Current status of working directory as text output
 
 2. `git_diff_unstaged`
+
    - Shows changes in working directory not yet staged
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -24,6 +26,7 @@ Please note that mcp-server-git is currently in early development. The functiona
    - Returns: Diff output of unstaged changes
 
 3. `git_diff_staged`
+
    - Shows changes that are staged for commit
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -31,6 +34,7 @@ Please note that mcp-server-git is currently in early development. The functiona
    - Returns: Diff output of staged changes
 
 4. `git_diff`
+
    - Shows differences between branches or commits
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -39,6 +43,7 @@ Please note that mcp-server-git is currently in early development. The functiona
    - Returns: Diff output comparing current state with target
 
 5. `git_commit`
+
    - Records changes to the repository
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -46,6 +51,7 @@ Please note that mcp-server-git is currently in early development. The functiona
    - Returns: Confirmation with new commit hash
 
 6. `git_add`
+
    - Adds file contents to the staging area
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -53,12 +59,14 @@ Please note that mcp-server-git is currently in early development. The functiona
    - Returns: Confirmation of staged files
 
 7. `git_reset`
+
    - Unstages all staged changes
    - Input:
      - `repo_path` (string): Path to Git repository
    - Returns: Confirmation of reset operation
 
 8. `git_log`
+
    - Shows the commit logs with optional date filtering
    - Inputs:
      - `repo_path` (string): Path to Git repository
@@ -75,33 +83,37 @@ Please note that mcp-server-git is currently in early development. The functiona
      - `base_branch` (string, optional): Base branch to create from (defaults to current branch)
    - Returns: Confirmation of branch creation
 10. `git_checkout`
-   - Switches branches
-   - Inputs:
-     - `repo_path` (string): Path to Git repository
-     - `branch_name` (string): Name of branch to checkout
-   - Returns: Confirmation of branch switch
+
+- Switches branches
+- Inputs:
+  - `repo_path` (string): Path to Git repository
+  - `branch_name` (string): Name of branch to checkout
+- Returns: Confirmation of branch switch
+
 11. `git_show`
-   - Shows the contents of a commit
-   - Inputs:
-     - `repo_path` (string): Path to Git repository
-     - `revision` (string): The revision (commit hash, branch name, tag) to show
-   - Returns: Contents of the specified commit
+
+- Shows the contents of a commit
+- Inputs:
+  - `repo_path` (string): Path to Git repository
+  - `revision` (string): The revision (commit hash, branch name, tag) to show
+- Returns: Contents of the specified commit
 
 12. `git_branch`
-   - List Git branches
-   - Inputs:
-     - `repo_path` (string): Path to the Git repository.
-     - `branch_type` (string): Whether to list local branches ('local'), remote branches ('remote') or all branches('all').
-     - `contains` (string, optional): The commit sha that branch should contain. Do not pass anything to this param if no commit sha is specified
-     - `not_contains` (string, optional): The commit sha that branch should NOT contain. Do not pass anything to this param if no commit sha is specified
-   - Returns: List of branches
+
+- List Git branches
+- Inputs:
+  - `repo_path` (string): Path to the Git repository.
+  - `branch_type` (string): Whether to list local branches ('local'), remote branches ('remote') or all branches('all').
+  - `contains` (string, optional): The commit sha that branch should contain. Do not pass anything to this param if no commit sha is specified
+  - `not_contains` (string, optional): The commit sha that branch should NOT contain. Do not pass anything to this param if no commit sha is specified
+- Returns: List of branches
 
 ## Installation
 
 ### Using uv (recommended)
 
 When using [`uv`](https://docs.astral.sh/uv/) no specific installation is needed. We will
-use [`uvx`](https://docs.astral.sh/uv/guides/tools/) to directly run *mcp-server-git*.
+use [`uvx`](https://docs.astral.sh/uv/guides/tools/) to directly run _mcp-server-git_.
 
 ### Using PIP
 
@@ -134,12 +146,13 @@ Add this to your `claude_desktop_config.json`:
   }
 }
 ```
+
 </details>
 
 <details>
 <summary>Using docker</summary>
 
-* Note: replace '/Users/username' with the a path that you want to be accessible by this tool
+- Note: replace '/Users/username' with the a path that you want to be accessible by this tool
 
 ```json
 "mcpServers": {
@@ -149,6 +162,7 @@ Add this to your `claude_desktop_config.json`:
   }
 }
 ```
+
 </details>
 
 <details>
@@ -162,6 +176,7 @@ Add this to your `claude_desktop_config.json`:
   }
 }
 ```
+
 </details>
 
 ### Usage with VS Code
@@ -205,7 +220,8 @@ For Docker installation:
           "run",
           "--rm",
           "-i",
-          "--mount", "type=bind,src=${workspaceFolder},dst=/workspace",
+          "--mount",
+          "type=bind,src=${workspaceFolder},dst=/workspace",
           "mcp/git"
         ]
       }
@@ -231,6 +247,7 @@ Add to your Zed settings.json:
   }
 ],
 ```
+
 </details>
 
 <details>
@@ -246,6 +263,7 @@ Add to your Zed settings.json:
   }
 },
 ```
+
 </details>
 
 ### Usage with [Zencoder](https://zencoder.ai)
@@ -260,10 +278,11 @@ Add to your Zed settings.json:
 
 ```json
 {
-    "command": "uvx",
-    "args": ["mcp-server-git", "--repository", "path/to/git/repo"]
+  "command": "uvx",
+  "args": ["mcp-server-git", "--repository", "path/to/git/repo"]
 }
 ```
+
 </details>
 
 ## Debugging
@@ -303,9 +322,12 @@ If you are doing local development, there are two ways to test your changes:
         "run",
         "--rm",
         "-i",
-        "--mount", "type=bind,src=/Users/username/Desktop,dst=/projects/Desktop",
-        "--mount", "type=bind,src=/path/to/other/allowed/dir,dst=/projects/other/allowed/dir,ro",
-        "--mount", "type=bind,src=/path/to/file.txt,dst=/projects/path/to/file.txt",
+        "--mount",
+        "type=bind,src=/Users/username/Desktop,dst=/projects/Desktop",
+        "--mount",
+        "type=bind,src=/path/to/other/allowed/dir,dst=/projects/other/allowed/dir,ro",
+        "--mount",
+        "type=bind,src=/path/to/file.txt,dst=/projects/path/to/file.txt",
         "mcp/git"
       ]
     }
@@ -314,17 +336,18 @@ If you are doing local development, there are two ways to test your changes:
 ```
 
 ### UVX
+
 ```json
 {
-"mcpServers": {
-  "git": {
-    "command": "uv",
-    "args": [
-      "--directory",
-      "/<path to mcp-servers>/mcp-servers/src/git",
-      "run",
-      "mcp-server-git"
-    ]
+  "mcpServers": {
+    "git": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/<path to mcp-servers>/mcp-servers/src/git",
+        "run",
+        "mcp-server-git"
+      ]
     }
   }
 }

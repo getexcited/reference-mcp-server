@@ -4,11 +4,6 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": [
-    "./**/*.ts"
-  ],
-  "exclude": [
-    "**/*.test.ts",
-    "vitest.config.ts"
-  ]
+  "include": ["./**/*.ts"],
+  "exclude": ["**/*.test.ts", "vitest.config.ts"]
 }

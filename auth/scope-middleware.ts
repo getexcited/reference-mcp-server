@@ -23,7 +23,11 @@ function buildScopeErrorHeader(requiredScopes: string[]): string {
  * @param requiredScopes - Array of scope/role names (any match passes)
  */
 export function requireScope(requiredScopes: string[]): RequestHandler {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): void => {
     if (!req.auth) {
       res.status(401).json({
         error: "invalid_token",
@@ -38,7 +42,9 @@ export function requireScope(requiredScopes: string[]): RequestHandler {
     const allPermissions = [...tokenScopes, ...tokenRoles];
 
     // Check if token has any of the required scopes/roles
-    const hasRequiredScope = requiredScopes.some((scope) => allPermissions.includes(scope));
+    const hasRequiredScope = requiredScopes.some((scope) =>
+      allPermissions.includes(scope)
+    );
 
     if (!hasRequiredScope) {
       // Return 403 with scope requirement for insufficient scope
@@ -67,7 +73,8 @@ export const requireDelegatedToken: RequestHandler = (
   if (!req.auth?.scp) {
     res.status(403).json({
       error: "invalid_token_type",
-      error_description: "This endpoint requires a delegated access token (user context)",
+      error_description:
+        "This endpoint requires a delegated access token (user context)",
     });
     return;
   }

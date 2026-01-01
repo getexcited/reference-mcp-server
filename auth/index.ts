@@ -39,7 +39,11 @@ export {
 export { securityHeaders } from "./security-headers.js";
 
 // Error Handlers
-export { handleAuthError, handleGeneralError, logAuthEvent } from "./error-handlers.js";
+export {
+  handleAuthError,
+  handleGeneralError,
+  logAuthEvent,
+} from "./error-handlers.js";
 
 // Rate Limiting
 export { metadataLimiter, apiLimiter } from "./rate-limiter.js";

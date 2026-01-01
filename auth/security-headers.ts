@@ -19,7 +19,10 @@ export const securityHeaders: RequestHandler = (
 
   // HSTS - enforce HTTPS (only in production)
   if (oauthConfig.nodeEnv === "production") {
-    res.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    res.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains; preload"
+    );
   }
 
   // Prevent caching of authenticated responses

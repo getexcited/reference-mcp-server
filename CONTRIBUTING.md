@@ -13,14 +13,17 @@ You can browse published servers using the simple UI at [https://registry.modelc
 ## Server Implementations
 
 We welcome:
+
 - **Bug fixes** — Help us squash those pesky bugs.
 - **Usability improvements** — Making servers easier to use for humans and agents.
 - **Enhancements that demonstrate MCP protocol features** — We encourage contributions that help reference servers better illustrate underutilized aspects of the MCP protocol beyond just Tools, such as Resources, Prompts, or Roots. For example, adding Roots support to filesystem-server helps showcase this important but lesser-known feature.
 
 We're more selective about:
+
 - **Other new features** — Especially if they're not crucial to the server's core purpose or are highly opinionated. The existing servers are reference servers meant to inspire the community. If you need specific features, we encourage you to build enhanced versions and publish them to the [MCP Server Registry](https://github.com/modelcontextprotocol/registry)! We think a diverse ecosystem of servers is beneficial for everyone.
 
 We don't accept:
+
 - **New server implementations** — We encourage you to publish them to the [MCP Server Registry](https://github.com/modelcontextprotocol/registry) instead.
 
 ## Testing

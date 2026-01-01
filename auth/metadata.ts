@@ -27,8 +27,13 @@ export interface ProtectedResourceMetadata {
  * Build the Protected Resource Metadata response.
  */
 export function buildProtectedResourceMetadata(): ProtectedResourceMetadata {
-  const { mcpServerUrl, mcpResourceIdentifier, entraClientId, entraTenantId, allowAnyTenant } =
-    oauthConfig;
+  const {
+    mcpServerUrl,
+    mcpResourceIdentifier,
+    entraClientId,
+    entraTenantId,
+    allowAnyTenant,
+  } = oauthConfig;
 
   // For multi-tenant: use 'common' endpoint, then validate tid claim
   // For single-tenant: use the specific tenant ID
@@ -36,7 +41,9 @@ export function buildProtectedResourceMetadata(): ProtectedResourceMetadata {
 
   return {
     resource: mcpResourceIdentifier || mcpServerUrl,
-    authorization_servers: [`https://login.microsoftonline.com/${tenantPath}/v2.0`],
+    authorization_servers: [
+      `https://login.microsoftonline.com/${tenantPath}/v2.0`,
+    ],
     bearer_methods_supported: ["header"],
     scopes_supported: [
       `api://${entraClientId}/mcp:tools`,
@@ -54,45 +61,51 @@ export function createMetadataRouter(): Router {
 
   // OAuth Protected Resource Metadata (RFC 9728)
   // This is the entry point for MCP client discovery
-  router.get("/.well-known/oauth-protected-resource", (_req: Request, res: Response) => {
-    const metadata = buildProtectedResourceMetadata();
-    res.json(metadata);
-  });
+  router.get(
+    "/.well-known/oauth-protected-resource",
+    (_req: Request, res: Response) => {
+      const metadata = buildProtectedResourceMetadata();
+      res.json(metadata);
+    }
+  );
 
   // Authorization Server Metadata proxy (optional, not recommended for production)
   // Clients should fetch directly from Entra ID
-  router.get("/.well-known/oauth-authorization-server", async (req: Request, res: Response) => {
-    try {
-      const { entraTenantId, allowAnyTenant } = oauthConfig;
+  router.get(
+    "/.well-known/oauth-authorization-server",
+    async (req: Request, res: Response) => {
+      try {
+        const { entraTenantId, allowAnyTenant } = oauthConfig;
 
-      // Determine which tenant's metadata to fetch
-      const tenantId = (req.query.tenant as string) || entraTenantId;
-      const tenantPath = allowAnyTenant && !tenantId ? "common" : tenantId;
+        // Determine which tenant's metadata to fetch
+        const tenantId = (req.query.tenant as string) || entraTenantId;
+        const tenantPath = allowAnyTenant && !tenantId ? "common" : tenantId;
 
-      // Entra ID uses openid-configuration, not oauth-authorization-server
-      const metadataUrl = `https://login.microsoftonline.com/${tenantPath}/v2.0/.well-known/openid-configuration`;
+        // Entra ID uses openid-configuration, not oauth-authorization-server
+        const metadataUrl = `https://login.microsoftonline.com/${tenantPath}/v2.0/.well-known/openid-configuration`;
 
-      const response = await fetch(metadataUrl, {
-        headers: { Accept: "application/json" },
-      });
+        const response = await fetch(metadataUrl, {
+          headers: { Accept: "application/json" },
+        });
 
-      if (!response.ok) {
-        throw new Error(`Entra ID returned ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Entra ID returned ${response.status}`);
+        }
+
+        const metadata = await response.json();
+
+        // Do not cache - return with no-store directive
+        res.set("Cache-Control", "no-store");
+        res.json(metadata);
+      } catch (error) {
+        console.error("Failed to fetch authorization server metadata:", error);
+        res.status(502).json({
+          error: "server_error",
+          error_description: "Failed to fetch authorization server metadata",
+        });
       }
-
-      const metadata = await response.json();
-
-      // Do not cache - return with no-store directive
-      res.set("Cache-Control", "no-store");
-      res.json(metadata);
-    } catch (error) {
-      console.error("Failed to fetch authorization server metadata:", error);
-      res.status(502).json({
-        error: "server_error",
-        error_description: "Failed to fetch authorization server metadata",
-      });
     }
-  });
+  );
 
   return router;
 }

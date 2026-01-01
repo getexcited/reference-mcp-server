@@ -4,7 +4,10 @@ import { oauthConfig } from "./config.js";
 /**
  * Build WWW-Authenticate header value.
  */
-function buildWwwAuthenticateHeader(error?: string, errorDescription?: string): string {
+function buildWwwAuthenticateHeader(
+  error?: string,
+  errorDescription?: string
+): string {
   const { mcpServerUrl } = oauthConfig;
   const resourceMetadataUrl = `${mcpServerUrl}/.well-known/oauth-protected-resource`;
 
@@ -36,7 +39,10 @@ export const handleAuthError: ErrorRequestHandler = (
 
   // Token expiration
   if (err.code === "ERR_JWT_EXPIRED" || err.message?.includes("expired")) {
-    res.set("WWW-Authenticate", buildWwwAuthenticateHeader("invalid_token", "Token expired"));
+    res.set(
+      "WWW-Authenticate",
+      buildWwwAuthenticateHeader("invalid_token", "Token expired")
+    );
     res.status(401).json({
       error: "invalid_token",
       error_description: "The access token has expired",
@@ -53,7 +59,8 @@ export const handleAuthError: ErrorRequestHandler = (
     res.set("WWW-Authenticate", buildWwwAuthenticateHeader("invalid_token"));
     res.status(401).json({
       error: "invalid_token",
-      error_description: "The access token is malformed or signature verification failed",
+      error_description:
+        "The access token is malformed or signature verification failed",
     });
     return;
   }
@@ -91,7 +98,9 @@ export const handleGeneralError: ErrorRequestHandler = (
   res.status(500).json({
     error: "server_error",
     error_description:
-      oauthConfig.nodeEnv === "development" ? err.message : "An internal server error occurred",
+      oauthConfig.nodeEnv === "development"
+        ? err.message
+        : "An internal server error occurred",
   });
 };
 
