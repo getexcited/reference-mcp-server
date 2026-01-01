@@ -32,9 +32,10 @@ export interface OAuthConfig {
 /**
  * Load OAuth configuration from environment variables.
  * Throws if required variables are missing when OAuth is enabled.
+ * OAuth is disabled by default - set OAUTH_ENABLED=true to enable.
  */
 export function loadOAuthConfig(): OAuthConfig {
-  const oauthEnabled = process.env.OAUTH_ENABLED !== "false";
+  const oauthEnabled = process.env.OAUTH_ENABLED === "true";
 
   const entraClientId = process.env.ENTRA_CLIENT_ID || "";
   const entraTenantId = process.env.ENTRA_TENANT_ID || "";

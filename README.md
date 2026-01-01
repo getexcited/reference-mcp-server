@@ -158,20 +158,20 @@ cp .env.example .env
 2. Configure your Entra ID application settings in `.env`:
 
 ```bash
-# Required for OAuth
+# Enable OAuth for HTTP transports
+OAUTH_ENABLED=true
+
+# Required when OAuth is enabled
 ENTRA_TENANT_ID=your-tenant-id          # Your Entra ID tenant ID
 ENTRA_CLIENT_ID=your-application-id     # Your Entra ID application/client ID
 MCP_SERVER_URL=https://your-server.com  # Public URL of your MCP server
-
-# Optional - disable OAuth for development/testing
-OAUTH_ENABLED=false
 ```
 
 ### Environment Variables
 
 | Variable                  | Required | Description                                                                  | Default                    |
 | ------------------------- | -------- | ---------------------------------------------------------------------------- | -------------------------- |
-| `OAUTH_ENABLED`           | No       | Enable/disable OAuth authentication                                          | `true`                     |
+| `OAUTH_ENABLED`           | No       | Enable/disable OAuth authentication                                          | `false`                    |
 | `ENTRA_TENANT_ID`         | Yes\*    | Your Entra ID tenant ID (can be omitted if using `AUTHORIZED_TENANTS`)       | -                          |
 | `ENTRA_CLIENT_ID`         | Yes\*    | Your Entra ID application/client ID                                          | -                          |
 | `MCP_SERVER_URL`          | Yes\*    | Public URL of your MCP server                                                | `http://localhost:3001`    |
@@ -193,15 +193,15 @@ OAUTH_ENABLED=false
 
 For detailed OAuth setup instructions, see the [auth/ module documentation](auth/README.md).
 
-### Disabling OAuth for Development
+### OAuth for HTTP Transports Only
 
-For local development with stdio transport or testing without authentication:
+OAuth is **disabled by default** since the default stdio transport doesn't require authentication. Only enable OAuth when using HTTP transports (SSE or Streamable HTTP):
 
 ```bash
-OAUTH_ENABLED=false npm run start:stdio
+OAUTH_ENABLED=true npm run start:streamableHttp
 ```
 
-Or add `OAUTH_ENABLED=false` to your `.env` file.
+Or add `OAUTH_ENABLED=true` to your `.env` file when deploying with HTTP transports.
 
 ## Development - Running from Source
 
