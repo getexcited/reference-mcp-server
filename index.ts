@@ -2,7 +2,7 @@
 
 // Parse command line arguments first
 const args = process.argv.slice(2);
-const scriptName = args[0] || "stdio";
+const scriptName = args[0] || "streamableHttp";
 
 async function run() {
   try {
@@ -24,7 +24,7 @@ async function run() {
         console.error(`-`.repeat(53));
         console.error(`  Everything Server Launcher`);
         console.error(`  Usage: node ./index.js [stdio|sse|streamableHttp]`);
-        console.error(`  Default transport: stdio`);
+        console.error(`  Default transport: streamableHttp`);
         console.error(`-`.repeat(53));
         console.error(`Unknown transport: ${scriptName}`);
         console.log("Available transports:");
