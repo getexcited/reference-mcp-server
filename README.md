@@ -132,50 +132,48 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
 }
 ```
 
-## Running from source with [HTTP+SSE Transport](https://modelcontextprotocol.io/specification/2024-11-05/basic/transports#http-with-sse) (deprecated as of [2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports))
+## Development - Running from Source
+
+### Install dependencies
 
 ```shell
-cd src/everything
 npm install
+```
+
+### Build the project
+
+```shell
+npm run build
+```
+
+### Run with stdio transport (default)
+
+```shell
+npm run start:stdio
+```
+
+### Run with SSE transport (deprecated)
+
+```shell
 npm run start:sse
 ```
 
-## Run from source with [Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)
+### Run with Streamable HTTP transport
 
 ```shell
-cd src/everything
-npm install
 npm run start:streamableHttp
 ```
 
-## Running as an installed package
-
-### Install
+### Watch mode for development
 
 ```shell
-npm install -g @modelcontextprotocol/server-everything@latest
+npm run watch
 ```
 
-### Run the default (stdio) server
+## Upstream NPM Package
+
+This fork is based on the official MCP Everything server. To use the original upstream version:
 
 ```shell
 npx @modelcontextprotocol/server-everything
-```
-
-### Or specify stdio explicitly
-
-```shell
-npx @modelcontextprotocol/server-everything stdio
-```
-
-### Run the SSE server
-
-```shell
-npx @modelcontextprotocol/server-everything sse
-```
-
-### Run the streamable HTTP server
-
-```shell
-npx @modelcontextprotocol/server-everything streamableHttp
 ```
