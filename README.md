@@ -143,6 +143,66 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
 }
 ```
 
+## OAuth 2.1 Authentication Configuration
+
+This server supports OAuth 2.1 authentication with Microsoft Entra ID for HTTP transports (SSE and Streamable HTTP). OAuth is **disabled by default** and only required when using HTTP transports.
+
+### Quick Setup
+
+1. Copy the example environment file:
+
+```shell
+cp .env.example .env
+```
+
+2. Configure your Entra ID application settings in `.env`:
+
+```bash
+# Required for OAuth
+ENTRA_TENANT_ID=your-tenant-id          # Your Entra ID tenant ID
+ENTRA_CLIENT_ID=your-application-id     # Your Entra ID application/client ID
+MCP_SERVER_URL=https://your-server.com  # Public URL of your MCP server
+
+# Optional - disable OAuth for development/testing
+OAUTH_ENABLED=false
+```
+
+### Environment Variables
+
+| Variable                  | Required | Description                                                                  | Default                    |
+| ------------------------- | -------- | ---------------------------------------------------------------------------- | -------------------------- |
+| `OAUTH_ENABLED`           | No       | Enable/disable OAuth authentication                                          | `true`                     |
+| `ENTRA_TENANT_ID`         | Yes\*    | Your Entra ID tenant ID (can be omitted if using `AUTHORIZED_TENANTS`)       | -                          |
+| `ENTRA_CLIENT_ID`         | Yes\*    | Your Entra ID application/client ID                                          | -                          |
+| `MCP_SERVER_URL`          | Yes\*    | Public URL of your MCP server                                                | `http://localhost:3001`    |
+| `MCP_RESOURCE_IDENTIFIER` | No       | Resource identifier for token validation                                     | Same as `MCP_SERVER_URL`   |
+| `AUTHORIZED_TENANTS`      | No       | Comma-separated tenant IDs allowed to access (use `common` for multi-tenant) | Empty (single-tenant mode) |
+| `PORT`                    | No       | Server port for HTTP transports                                              | `3001`                     |
+| `NODE_ENV`                | No       | Node environment (`development`, `production`)                               | `development`              |
+| `ALLOWED_ORIGINS`         | No       | CORS allowed origins (comma-separated or `*`)                                | `*`                        |
+
+\* Required only when `OAUTH_ENABLED=true`
+
+### Setting Up Microsoft Entra ID
+
+1. Register an application in [Microsoft Entra ID](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps)
+2. Configure API permissions for your application
+3. Note the Application (client) ID and Tenant ID
+4. Configure the redirect URIs for your application
+5. Create a client secret (if using confidential client flow)
+
+For detailed OAuth setup instructions, see the [auth/ module documentation](auth/README.md).
+
+### Disabling OAuth for Development
+
+For local development with stdio transport or testing without authentication:
+
+```bash
+OAUTH_ENABLED=false npm run start:stdio
+```
+
+Or add `OAUTH_ENABLED=false` to your `.env` file.
+
 ## Development - Running from Source
 
 ### Install dependencies
@@ -165,11 +225,15 @@ npm run start:stdio
 
 ### Run with SSE transport (deprecated)
 
+**Note:** Requires OAuth configuration (see above section)
+
 ```shell
 npm run start:sse
 ```
 
 ### Run with Streamable HTTP transport
+
+**Note:** Requires OAuth configuration (see above section)
 
 ```shell
 npm run start:streamableHttp
