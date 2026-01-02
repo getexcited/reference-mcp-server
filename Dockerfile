@@ -28,5 +28,5 @@ ENV NODE_ENV=production
 
 RUN npm ci --ignore-scripts --omit-dev
 
-# Default to stdio transport; can be overridden with: stdio, sse, streamableHttp
-CMD ["node", "dist/index.js", "stdio"]
+# Default to streamableHttp transport; can be overridden with: stdio, sse, streamableHttp
+CMD ["node", "dist/index.js", "streamableHttp"]
